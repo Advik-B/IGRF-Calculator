@@ -3,3 +3,8 @@ build/
 dist/
 .idea/
 *.pyc
+__pycache__/
+*.xlsx
+download_igrf14.py
+convert_igrf14_to_csv.py
+test_igrf14.py
