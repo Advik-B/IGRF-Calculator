@@ -155,10 +155,10 @@ class BuildExeCommand(Command):
 
 # Read dependencies from pyproject.toml instead of requirements.txt
 try:
-    import tomllib  # Python 3.11+
+    import tomllib  # Python 3.13+ (included in stdlib)
 except ImportError:
     try:
-        import tomli as tomllib  # Fallback for older Python
+        import tomli as tomllib  # Fallback (though project requires 3.13+)
     except ImportError:
         tomllib = None
 

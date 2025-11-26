@@ -713,7 +713,8 @@ class UserManualDialog(QDialog):
             <div class="section">
                 <h2>About</h2>
                 <p>The IGRF (International Geomagnetic Reference Field) Calculator computes magnetic field values
-                at any location on Earth using the IGRF-14 model, which is valid from 1900 to 2025.</p>
+                at any location on Earth using the IGRF-14 model. The model provides main field coefficients 
+                from 1900 to 2025, with secular variation extrapolations through 2030.</p>
                 <p><strong>Version:</strong> IGRF-14 (2025 epoch)</p>
                 <p><strong>Data Range:</strong> Years 1900-2025 with secular variation predictions to 2030</p>
             </div>
