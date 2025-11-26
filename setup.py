@@ -153,8 +153,25 @@ class BuildExeCommand(Command):
                   file=sys.stderr)
             sys.exit(1)
 
-with open("requirements.txt") as f:
-    req = f.readlines()
+# Read dependencies from pyproject.toml instead of requirements.txt
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    try:
+        import tomli as tomllib  # Fallback for older Python
+    except ImportError:
+        tomllib = None
+
+install_requires = []
+if tomllib:
+    try:
+        with open("pyproject.toml", "rb") as f:
+            pyproject = tomllib.load(f)
+            install_requires = pyproject.get("project", {}).get("dependencies", [])
+    except FileNotFoundError:
+        print("Warning: pyproject.toml not found", file=sys.stderr)
+else:
+    print("Warning: tomllib/tomli not available, install_requires will be empty", file=sys.stderr)
 
 # Standard setup() function
 setup(
@@ -165,7 +182,7 @@ setup(
     py_modules=[os.path.splitext(MAIN_SCRIPT)[0]],
     # List runtime dependencies here for informational purposes
     # or if you intend to distribute as a package too.
-    install_requires=req,
+    install_requires=install_requires,
     # Define the custom command
     cmdclass={
         'build_exe': BuildExeCommand,
