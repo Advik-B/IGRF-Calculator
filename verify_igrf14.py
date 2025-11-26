@@ -7,6 +7,7 @@ This script verifies all components are working correctly.
 import os
 import sys
 import subprocess
+import shutil
 
 def check_file(filename, description):
     """Check if a file exists and has content."""
@@ -22,7 +23,16 @@ def check_coefficient_data():
     """Verify coefficient file structure."""
     try:
         import pandas as pd
-        df = pd.read_csv('coeff.csv')
+        
+        # Use absolute path based on script location
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        coeff_path = os.path.join(script_dir, 'coeff.csv')
+        
+        if not os.path.exists(coeff_path):
+            print(f"✗ Coefficient file not found at: {coeff_path}")
+            return False
+        
+        df = pd.read_csv(coeff_path)
         
         # Check column count (should be 30: g/h, n, m, 26 years, 1 SV)
         if len(df.columns) == 30:
@@ -52,7 +62,15 @@ def check_coefficient_data():
 def check_calc_module():
     """Check calc.py for IGRF-14 references."""
     try:
-        with open('calc.py', 'r') as f:
+        # Use absolute path based on script location
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        calc_path = os.path.join(script_dir, 'calc.py')
+        
+        if not os.path.exists(calc_path):
+            print(f"✗ calc.py not found at: {calc_path}")
+            return False
+        
+        with open(calc_path, 'r') as f:
             content = f.read()
         
         if 'IGRF-14' in content or 'igrf14' in content.lower():
@@ -94,12 +112,15 @@ def check_dependencies():
     return all_good
 
 def check_virtual_display():
-    """Check if Xvfb is available."""
+    """Check if Xvfb is available (Linux only)."""
+    # Only relevant on Linux
+    if not sys.platform.startswith('linux'):
+        print("⚠ Xvfb is Linux-specific (not required on this platform)")
+        return True
+    
     try:
-        result = subprocess.run(['which', 'Xvfb'], 
-                              capture_output=True, 
-                              timeout=2)
-        if result.returncode == 0:
+        xvfb_path = shutil.which('Xvfb')
+        if xvfb_path:
             print("✓ Xvfb (virtual display) is available")
             return True
         else:

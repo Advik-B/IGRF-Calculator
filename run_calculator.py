@@ -15,30 +15,38 @@ import os
 import sys
 import subprocess
 import time
+import shutil
 
 def check_display():
     """Check if a display is available."""
     display = os.environ.get('DISPLAY')
     if display:
-        # Try to connect to the display
+        # Try to connect to the display (X11 only)
         try:
-            # Check if we can actually use the display
-            result = subprocess.run(['xdpyinfo'], 
-                                  capture_output=True, 
-                                  timeout=2)
-            return result.returncode == 0
+            # Check if we can actually use the display (Unix/Linux only)
+            if sys.platform.startswith('linux') or sys.platform == 'darwin':
+                result = subprocess.run(['xdpyinfo'], 
+                                      capture_output=True, 
+                                      timeout=2)
+                return result.returncode == 0
+            else:
+                # On Windows or other platforms, assume display is available
+                return True
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return False
     return False
 
 def start_xvfb():
-    """Start Xvfb virtual display."""
+    """Start Xvfb virtual display (Linux only)."""
+    # Only try on Linux
+    if not sys.platform.startswith('linux'):
+        print("Xvfb is only available on Linux systems.")
+        return None
+    
     try:
-        # Check if Xvfb is available
-        result = subprocess.run(['which', 'Xvfb'], 
-                              capture_output=True, 
-                              timeout=2)
-        if result.returncode != 0:
+        # Check if Xvfb is available using shutil.which (cross-platform)
+        xvfb_path = shutil.which('Xvfb')
+        if not xvfb_path:
             print("Xvfb not found. Install with: sudo apt-get install xvfb")
             return None
         
@@ -93,6 +101,12 @@ def main():
         print("\nStarting IGRF Calculator application...")
         import app
         exit_code = app.main()
+        
+    except ImportError as ie:
+        print(f"\nImport Error: {ie}")
+        print("Please install required dependencies:")
+        print("  pip install pandas numpy openpyxl PyQt6 pyexcel pyexcel-xls")
+        exit_code = 1
         
     except KeyboardInterrupt:
         print("\nApplication interrupted by user")
