@@ -73,7 +73,9 @@ def check_calc_module():
         with open(calc_path, 'r') as f:
             content = f.read()
         
-        if 'IGRF-14' in content or 'igrf14' in content.lower():
+        # Case-insensitive check for IGRF-14 references
+        content_lower = content.lower()
+        if 'igrf-14' in content_lower or 'igrf14' in content_lower or 'igrf 14' in content_lower:
             print("✓ calc.py references IGRF-14")
         else:
             print("⚠ calc.py may still reference IGRF-13")

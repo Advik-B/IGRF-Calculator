@@ -21,16 +21,16 @@ def check_display():
     """Check if a display is available."""
     display = os.environ.get('DISPLAY')
     if display:
-        # Try to connect to the display (X11 only)
+        # Try to connect to the display (X11-based systems: Linux, macOS with X11)
         try:
-            # Check if we can actually use the display (Unix/Linux only)
+            # Check if we can actually use the X11 display (Unix-like systems)
             if sys.platform.startswith('linux') or sys.platform == 'darwin':
                 result = subprocess.run(['xdpyinfo'], 
                                       capture_output=True, 
                                       timeout=2)
                 return result.returncode == 0
             else:
-                # On Windows or other platforms, assume display is available
+                # On Windows or other platforms, assume display is available if DISPLAY is set
                 return True
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return False
