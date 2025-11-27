@@ -7,26 +7,26 @@ from datetime import date, datetime
 class GeoMag:
     def __init__(self, coeffs_filename=None, desired_year=None):
         """
-        Initialize the GeoMag object with updated IGRF13 coefficients from an Excel file.
+        Initialize the GeoMag object with updated IGRF-14 coefficients from an Excel file.
 
         Parameters:
             coeffs_filename (str): Path to the Excel file containing updated coefficients.
             desired_year (float): The epoch (decimal year) for which to interpolate the coefficients.
-                                   If None, defaults to the latest epoch available (e.g. 2020).
+                                   If None, defaults to the latest epoch available (e.g. 2025).
         """
         if not coeffs_filename:
             coeffs_filename = os.path.join(os.path.dirname(__file__), 'coeff.xlsx')
 
         # Read file
         if coeffs_filename.endswith(('.xls', '.xlsx')):
-            coeffs_df = pd.read_excel(coeffs_filename, sheet_name='IGRF13coeffs')
+            coeffs_df = pd.read_excel(coeffs_filename, sheet_name='igrf14coeffs')
         else:
             coeffs_df = pd.read_csv(coeffs_filename)
 
         # Debug: print column names so you can verify them.
         print("Excel columns:", coeffs_df.columns.tolist())
 
-        # Expecting columns: ["g/h", "n", "m", "1900", "1905", ..., "2020", "2020-25"]
+        # Expecting columns: ["g/h", "n", "m", "1900", "1905", ..., "2025", "2025-30"]
         # Extract epoch columns (from index 3 to second-to-last).
         all_cols = list(coeffs_df.columns)
         epoch_col_names = all_cols[3:-1]

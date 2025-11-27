@@ -1,0 +1,66 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      
+      - name: Set up Python
+        run: uv python install 3.13
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Install PyInstaller
+        run: uv pip install pyinstaller
+      
+      - name: Build executable with PyInstaller
+        run: |
+          uv run python setup.py build_exe
+      
+      - name: Create artifact directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build-artifacts
+          if (Test-Path "dist/IGRF Calculator") {
+            Copy-Item -Path "dist/IGRF Calculator" -Destination "build-artifacts/" -Recurse
+          } else {
+            Copy-Item -Path "dist/*" -Destination "build-artifacts/" -Recurse
+          }
+      
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: IGRF-Calculator-Windows
+          path: build-artifacts/
+          retention-days: 30
+      
+      - name: Create release asset (if tagged)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          Compress-Archive -Path "build-artifacts/*" -DestinationPath "IGRF-Calculator-Windows.zip"
+        shell: pwsh
+      
+      - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: IGRF-Calculator-Windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

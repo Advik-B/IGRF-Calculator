@@ -9,10 +9,10 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QTableWidget, QTableWidgetItem,
     QGridLayout, QMessageBox, QLineEdit, QFileDialog, QComboBox,
     QLabel, QPushButton, QStyledItemDelegate, QProgressBar, QHBoxLayout,
-    QVBoxLayout, QAbstractItemView, QStyle
+    QVBoxLayout, QAbstractItemView, QStyle, QDialog, QTextBrowser, QMenuBar
 )
 from PyQt6.QtCore import QFile, QIODevice, Qt, QModelIndex, QSignalBlocker
-from PyQt6.QtGui import QColor, QFont, QStandardItemModel, QStandardItem, QPainter, QPalette, QIcon # Added QPalette, QIcon
+from PyQt6.QtGui import QColor, QFont, QStandardItemModel, QStandardItem, QPainter, QPalette, QIcon, QAction # Added QPalette, QIcon, QAction
 from PyQt6.QtCore import QTimer # Added for potential splash screen or delayed init check
 
 # --- Data Handling Imports ---
@@ -675,6 +675,210 @@ class IGRFCalculator(QWidget):
         self.close(); return False
 
 
+# === User Manual Dialog ===
+class UserManualDialog(QDialog):
+    """Dialog to display user manual and help information."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("IGRF Calculator - User Manual")
+        self.setMinimumSize(700, 600)
+        self.initUI()
+    
+    def initUI(self):
+        layout = QVBoxLayout(self)
+        
+        # Create text browser for HTML content
+        self.textBrowser = QTextBrowser(self)
+        self.textBrowser.setOpenExternalLinks(True)
+        
+        # Set the manual content
+        manual_html = """
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+                h2 { color: #34495e; margin-top: 20px; }
+                h3 { color: #7f8c8d; }
+                .section { margin-bottom: 20px; }
+                .note { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 10px 0; }
+                .important { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 10px; margin: 10px 0; }
+                code { background-color: #f4f4f4; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+                ul { line-height: 1.6; }
+            </style>
+        </head>
+        <body>
+            <h1>IGRF Calculator User Manual</h1>
+            
+            <div class="section">
+                <h2>About</h2>
+                <p>The IGRF (International Geomagnetic Reference Field) Calculator computes magnetic field values
+                at any location on Earth using the IGRF-14 model. The model provides main field coefficients 
+                from 1900 to 2025, with secular variation extrapolations through 2030.</p>
+                <p><strong>Version:</strong> IGRF-14 (2025 epoch)</p>
+                <p><strong>Data Range:</strong> Years 1900-2025 with secular variation predictions to 2030</p>
+            </div>
+            
+            <div class="section">
+                <h2>Quick Start Guide</h2>
+                <h3>1. Load Your Data File</h3>
+                <ul>
+                    <li>Click <strong>Browse...</strong> or enter the file path directly</li>
+                    <li>Supported formats: CSV, XLS, XLSX</li>
+                    <li>Your file should contain columns for: Latitude, Longitude, Altitude, and Date</li>
+                </ul>
+                
+                <h3>2. Map Your Columns</h3>
+                <p>After loading the file, select the appropriate columns from your data:</p>
+                <ul>
+                    <li><strong>Latitude:</strong> Geographic latitude in decimal degrees (-90 to 90)</li>
+                    <li><strong>Longitude:</strong> Geographic longitude in decimal degrees (-180 to 180)</li>
+                    <li><strong>Altitude (m):</strong> Height above sea level in meters</li>
+                    <li><strong>Date:</strong> Date of the measurement (supports multiple formats)</li>
+                </ul>
+                
+                <div class="note">
+                    <strong>Note:</strong> The application will attempt to auto-detect your columns based on common naming patterns.
+                </div>
+                
+                <h3>3. Calculate & Save</h3>
+                <ul>
+                    <li>Click <strong>Calculate IGRF & Save</strong> button</li>
+                    <li>The calculation will run for all rows in your data</li>
+                    <li>Progress will be displayed during calculation</li>
+                    <li>Choose where to save the results (CSV or XLSX format)</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>Output Parameters</h2>
+                <p>The calculator adds three columns to your data:</p>
+                <ul>
+                    <li><strong>IGRF_nT:</strong> Total magnetic field intensity in nanoTesla</li>
+                    <li><strong>INC_deg:</strong> Magnetic inclination (dip angle) in degrees</li>
+                    <li><strong>DEC_deg:</strong> Magnetic declination in degrees</li>
+                </ul>
+                
+                <h3>Understanding the Results</h3>
+                <ul>
+                    <li><strong>Total Intensity (IGRF_nT):</strong> Magnitude of the Earth's magnetic field (typical range: 20,000-70,000 nT)</li>
+                    <li><strong>Declination (DEC_deg):</strong> Angle between magnetic north and true north (positive = east, negative = west)</li>
+                    <li><strong>Inclination (INC_deg):</strong> Angle of the field relative to horizontal (positive = downward, negative = upward)</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>Data Format Requirements</h2>
+                
+                <h3>Coordinate Format</h3>
+                <ul>
+                    <li>Latitude: Decimal degrees, -90 (South Pole) to +90 (North Pole)</li>
+                    <li>Longitude: Decimal degrees, -180 (West) to +180 (East)</li>
+                    <li>Altitude: Meters above sea level</li>
+                </ul>
+                
+                <h3>Date Format</h3>
+                <p>The application recognizes multiple date formats including:</p>
+                <ul>
+                    <li>YYYY-MM-DD (e.g., 2025-01-15)</li>
+                    <li>MM/DD/YYYY (e.g., 01/15/2025)</li>
+                    <li>DD/MM/YYYY (e.g., 15/01/2025)</li>
+                    <li>ISO format with time (e.g., 2025-01-15T12:00:00)</li>
+                </ul>
+                
+                <div class="important">
+                    <strong>Important:</strong> Dates should be between 1900 and 2030 for best accuracy. 
+                    Values outside this range will use extrapolation.
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Tips & Best Practices</h2>
+                <ul>
+                    <li><strong>File Size:</strong> Large files (>10,000 rows) may take several minutes to process</li>
+                    <li><strong>Data Validation:</strong> Check that all rows have valid numeric coordinates and dates</li>
+                    <li><strong>Missing Data:</strong> Rows with invalid data will have NA values in the output</li>
+                    <li><strong>Column Names:</strong> Use descriptive column names (lat, latitude, lon, longitude, etc.) for automatic detection</li>
+                    <li><strong>Save Early:</strong> For large datasets, save intermediate results to avoid data loss</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>Troubleshooting</h2>
+                
+                <h3>File Won't Load</h3>
+                <ul>
+                    <li>Ensure file is in CSV, XLS, or XLSX format</li>
+                    <li>Check file is not open in another program</li>
+                    <li>Verify file has proper read permissions</li>
+                </ul>
+                
+                <h3>Calculation Errors</h3>
+                <ul>
+                    <li>Verify latitude values are between -90 and 90</li>
+                    <li>Verify longitude values are between -180 and 180</li>
+                    <li>Check date format is recognized</li>
+                    <li>Ensure altitude is numeric (can be 0 for sea level)</li>
+                </ul>
+                
+                <h3>NA Values in Results</h3>
+                <ul>
+                    <li>Check the error count in the calculation summary</li>
+                    <li>Review console output for specific error messages</li>
+                    <li>Verify data types (coordinates should be numeric, not text)</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>About IGRF-14</h2>
+                <p>The International Geomagnetic Reference Field (IGRF) is a standard mathematical description 
+                of the Earth's main magnetic field. IGRF-14 is the 14th generation model, released in 2024.</p>
+                
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Covers the period 1900-2025</li>
+                    <li>Includes secular variation predictions for 2025-2030</li>
+                    <li>Spherical harmonic model up to degree and order 13</li>
+                    <li>Maintained by IAGA (International Association of Geomagnetism and Aeronomy)</li>
+                </ul>
+                
+                <p><strong>References:</strong></p>
+                <ul>
+                    <li>Official IGRF Website: <a href="https://www.ncei.noaa.gov/products/international-geomagnetic-reference-field">NOAA/NCEI</a></li>
+                    <li>IAGA Working Group: <a href="https://www.iaga-aiga.org/igrf/">IAGA V-MOD</a></li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <h2>Keyboard Shortcuts</h2>
+                <ul>
+                    <li><strong>F1:</strong> Show this help dialog</li>
+                    <li><strong>Ctrl+O:</strong> Open file dialog (when Browse button has focus)</li>
+                    <li><strong>Enter:</strong> Load file (when path is entered in text box)</li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <p style="text-align: center; color: #7f8c8d; margin-top: 30px;">
+                    <small>IGRF Calculator | IGRF-14 (2025 epoch) | For scientific and educational use</small>
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        self.textBrowser.setHtml(manual_html)
+        layout.addWidget(self.textBrowser)
+        
+        # Close button
+        close_button = QPushButton("Close", self)
+        close_button.clicked.connect(self.close)
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_button)
+        layout.addLayout(button_layout)
+
+
 # === Main Application Window ===
 class Interface(QWidget):
     """Main application window using QWidget as base."""
@@ -786,6 +990,11 @@ class Interface(QWidget):
              QMessageBox.critical(self, "Initialization Error", "GeoMag library failed (check coeff.csv & console). Calculations disabled.")
              self.runButton.setEnabled(False)
              self.igrfWidget.setEnabled(False)
+    
+    def show_user_manual(self):
+        """Display the user manual dialog."""
+        manual_dialog = UserManualDialog(self)
+        manual_dialog.exec()
 
 
 # === Main Execution ===
@@ -810,6 +1019,36 @@ def main():
     main_window.setCentralWidget(central_widget)
     main_window.resize(1000, 750)
     main_window.statusBar() # Create status bar
+    
+    # Create menu bar
+    menubar = main_window.menuBar()
+    
+    # Help menu
+    help_menu = menubar.addMenu("&Help")
+    
+    # User Manual action
+    manual_action = QAction("&User Manual", main_window)
+    manual_action.setShortcut("F1")
+    manual_action.setStatusTip("Show user manual and help information")
+    manual_action.triggered.connect(central_widget.show_user_manual)
+    help_menu.addAction(manual_action)
+    
+    # About action
+    about_action = QAction("&About IGRF Calculator", main_window)
+    about_action.setStatusTip("About this application")
+    about_action.triggered.connect(lambda: QMessageBox.about(
+        main_window,
+        "About IGRF Calculator",
+        "<h3>IGRF Calculator</h3>"
+        "<p><b>Version:</b> 1.0.0 (IGRF-14)</p>"
+        "<p>Calculate magnetic field values using the International Geomagnetic Reference Field model.</p>"
+        "<p><b>Model:</b> IGRF-14 (2025 epoch)</p>"
+        "<p><b>Data Range:</b> 1900-2025 with predictions to 2030</p>"
+        "<hr>"
+        "<p><small>Maintained by IAGA (International Association of Geomagnetism and Aeronomy)</small></p>"
+    ))
+    help_menu.addAction(about_action)
+    
     main_window.show()
 
     # Perform GeoMag check after window exists
